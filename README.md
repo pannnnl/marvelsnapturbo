@@ -60,5 +60,10 @@ If you want to receive Discord alerts for daily reward claims and new shop bundl
 You can download the latest `.exe` release from the **Releases** section on the right side of this repository.  
 你可以從右側的 **Releases** 頁面下載打包好的 `.exe` 執行檔直接使用。
 
+> ⚠️ **Antivirus False Positive Notice (防毒軟體誤報提示)**
+> This program is packaged using Python and PyInstaller. Due to the lack of a commercial code-signing certificate, some antivirus software (such as Windows Defender) may falsely flag it as an unknown publisher or threat. This is a common occurrence for open-source tools and is 100% safe. If blocked, simply click "More info" -> "Run anyway", or add it to your antivirus exclusion list.
+> 
+> 本程式使用 Python 與 PyInstaller 打包。由於未購買商業數位簽章，部分防毒軟體（如 Windows Defender）可能會誤報為不明檔案或潛在威脅。這是開源工具常見的情況，程式絕對安全。若遭阻攔，請點擊「其他資訊」 -> 「仍要執行」，或將其加入防毒白名單即可。
+
 #### 🖼 Card Collection Gallery Preview (卡片展覽館預覽)
 <img width="1663" height="919" alt="螢幕擷取畫面 2026-10-20 025926" src="https://github.com/user-attachments/assets/ef2f12f2-ea69-4691-a558-765e3e049d01" />
