@@ -59,3 +59,6 @@ If you want to receive Discord alerts for daily reward claims and new shop bundl
 ### 📥 Download & Usage (下載與使用)
 You can download the latest `.exe` release from the **Releases** section on the right side of this repository.  
 你可以從右側的 **Releases** 頁面下載打包好的 `.exe` 執行檔直接使用。
+
+#### 🖼 Card Collection Gallery Preview (卡片展覽館預覽)
+<img width="1663" height="919" alt="螢幕擷取畫面 2026-10-20 025926" src="https://github.com/user-attachments/assets/ef2f12f2-ea69-4691-a558-765e3e049d01" />
