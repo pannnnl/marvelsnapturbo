@@ -16,6 +16,13 @@
 - **📤 Share Code System**: Generate and import share codes to view your friends' card collections instantly.
 - **🌐 Bilingual Support**: Seamlessly switch between English and Traditional Chinese in one click.
 
+### 📖 How to Setup Discord Notifications
+If you want to receive Discord alerts for daily reward claims and new shop bundles:
+1. Invite the **MS Daily Store Alert Bot** to your Discord server.
+2. In any channel on your server, type `!id`.
+3. The bot will send you a Direct Message (DM) containing your **Discord User ID**.
+4. Copy and paste your User ID into the application field.
+
 ---
 
 <a name="繁體中文"></a>
@@ -29,6 +36,13 @@
 - **📊 卡片收藏展覽**：同步本地遊戲數據，自動生成並排序卡片展覽館（依 Cost 優先、Power 次之雙重排序）。
 - **📤 快速分享與導入**：一鍵生成專屬卡片庫代碼，或貼上好友的代碼即時檢視對方的收藏。
 - **🌐 雙語介面切換**：支援英文與繁體中文介面一鍵切換。
+
+### 📖 如何設定 Discord 通知功能
+如果想要使用 Discord 接收領獎與商店禮包通知：
+1. 需要先將 Discord Bot **(MS Daily Store Alert Bot)** 邀請/加入至你的 Discord 伺服器。
+2. 成功加入後，在該 Discord 伺服器任意頻道輸入 `!id`。
+3. Bot 會透過私訊（DM）發送你的 **Discord 用戶 ID** 給你。
+4. 複製該用戶 ID 並貼上至程式的設定欄位即可。
 
 ---
 
