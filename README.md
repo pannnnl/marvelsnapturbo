@@ -33,7 +33,7 @@ If you want to receive Discord alerts for daily reward claims and new shop bundl
 <a name="繁體中文"></a>
 ## 🇭🇰 繁體中文
 
-**Marvel Snap Turbo** 是一款專為《Marvel Snap (漫威快攻)》玩家打造的自動化與收藏管理工具。它可以幫你自動領取每日獎勵、監控網頁商店禮包，還能一鍵生成精美的卡片展覽館與好友分享！
+**Marvel Snap Turbo** 是一款專為《Marvel Snap (漫威：瞬戰超能)》玩家打造的自動化與收藏管理工具。它可以幫你自動領取每日獎勵、監控網頁商店禮包，還能一鍵生成精美的卡片展覽館與好友分享！
 
 ### ✨ 核心功能
 - **🚀 自動領取獎勵**：自動登入網頁並領取每日免費 100 點數。
