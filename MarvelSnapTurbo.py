@@ -29,7 +29,7 @@ BOT_INVITE_URL = "https://discord.com/oauth2/authorize?client_id=156032747971176
 # 🚀 使用 GitHub 官方 Releases API 進行版本檢查
 GITHUB_RELEASE_API = "https://api.github.com/repos/pannnnl/marvelsnapturbo/releases/latest"
 
-CURRENT_VERSION = "8.18"  # 當前程式版本號
+CURRENT_VERSION = "8.2"  # 版本號維持 v8.2
 AUTHOR_GITHUB = "https://github.com/pannnnl/marvelsnapturbo"  # 專案 GitHub 連結
 
 # 自動在用戶的「文件 (Documents)」建立專屬資料夾
@@ -43,14 +43,14 @@ USER_DATA_DIR = os.path.join(BASE_DIR, "browser_profile")
 # 🌐 多國語言介面字典
 LANG_DATA = {
     "en": {
-        "badge": "⚡ TURBO AUTOMATION SUITE v8.18 [Global UTC Sync]",
+        "badge": "⚡ TURBO v8.2 [Optimized Web Login & Session Guard]",
         "switch_btn": "文/A",
         "clear_session_btn": "🗑 Clear Web Session",
         "refresh_btn": "↻ Refresh Local Data",
         "title": "Marvel Snap Turbo",
         "subtitle": "Collection Gallery & Sharing • Auto 100 Credits • Web Shop Bundle Alerts",
         "account_status": "🎮 Game Account: Not Logged In\n🕒 Last Login: Unknown",
-        "id_label": "Discord User ID (For Auto-Claim & Shop Alerts)",
+        "id_label": "Discord User ID",
         "id_placeholder": "Enter Discord User ID (e.g. 123456789)",
         "invite_bot_link": "🔗 Invite Bot to Discord",
         "shop_cb": "Enable shop bundle alerts (8-day smart filter)",
@@ -61,17 +61,17 @@ LANG_DATA = {
         "share_import_btn": "📥 Import",
         "share_placeholder": "Paste friend's card collection code here...",
         "log_title": " 💻 System Terminal Log (English)",
-        "ready_msg": "💡 Marvel Snap Turbo v8.18 ready. Global UTC shop sync enabled.",
+        "ready_msg": "💡 Marvel Snap Turbo v8.2 ready. Enhanced login state handler active.",
     },
     "zh": {
-        "badge": "⚡ TURBO 智能自動化助手 v8.18 [全球統一 UTC 同步版]",
+        "badge": "⚡ TURBO v8.2 [優化首次登入網店版本]",
         "switch_btn": "文/A",
         "clear_session_btn": "🗑 清除網頁授權快取",
         "refresh_btn": "↻ 重新整理本地數據",
         "title": "Marvel Snap Turbo",
         "subtitle": "卡片收藏展覽與分享 • 自動領取 100 點數 • 網絡商店新禮包通知",
         "account_status": "🎮 遊戲帳號: 尚未登入 (Not Logged In)\n🕒 上次登入: 未知",
-        "id_label": "Discord 使用者 ID (用於自動領取與商店通知)",
+        "id_label": "Discord 使用者 ID",
         "id_placeholder": "請輸入你的 Discord ID (例如 123456789)",
         "invite_bot_link": "🔗 邀請 Bot 加入 Discord",
         "shop_cb": "啟用禮包商店通知 (8天智慧過濾)",
@@ -82,7 +82,7 @@ LANG_DATA = {
         "share_import_btn": "📥 導入",
         "share_placeholder": "在此貼上好友的卡片庫代碼...",
         "log_title": " 💻 System Terminal Log (English)",
-        "ready_msg": "💡 Marvel Snap Turbo v8.18 已就緒。已啟用全球統一 UTC 商店刷新同步機制。",
+        "ready_msg": "💡 Marvel Snap Turbo v8.2 已就緒。已啟用優化登入狀態攔截與 Bot 喚醒防護。",
     }
 }
 
@@ -179,7 +179,7 @@ def stitch_shop_images(image_paths, output_path):
 
 
 def get_local_snap_id():
-    """精準從 AnalyticState.json 結構中解析出 SnapId"""
+    """從 AnalyticState.json 複製快照後解析 SnapId（支援遊戲運行中同步讀取）"""
     try:
         local_app_data = os.environ.get("LOCALAPPDATA", "")
         if not local_app_data:
@@ -193,22 +193,36 @@ def get_local_snap_id():
         if not os.path.exists(analytic_path):
             return None
 
-        with open(analytic_path, "r", encoding="utf-8-sig") as f:
+        temp_path = os.path.join(BASE_DIR, "temp_AnalyticState.json")
+        try:
+            shutil.copy2(analytic_path, temp_path)
+            read_target = temp_path
+        except PermissionError:
+            read_target = analytic_path
+
+        with open(read_target, "r", encoding="utf-8-sig", errors="ignore") as f:
             data = json.load(f)
-            flushing_batches = data.get("BatchState", {}).get("FlushingBatches", [])
-            for batch in flushing_batches:
-                events = batch.get("Events", [])
-                for event in events:
-                    snap_id = event.get("Metadata", {}).get("SnapId", "")
-                    if snap_id:
-                        return snap_id.strip()
+
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except:
+                pass
+
+        flushing_batches = data.get("BatchState", {}).get("FlushingBatches", [])
+        for batch in flushing_batches:
+            events = batch.get("Events", [])
+            for event in events:
+                snap_id = event.get("Metadata", {}).get("SnapId", "")
+                if snap_id:
+                    return snap_id.strip()
     except Exception as e:
-        print(f"Failed to parse AnalyticState.json: {e}")
+        print(f"Failed to parse AnalyticState.json via snapshot: {e}")
     return None
 
 
 def get_local_last_login_time():
-    """從 AccountState.json 讀取 LastLoginTime 並自動轉為電腦本地時區"""
+    """從 AccountState.json 複製快照後解析 LastLoginTime（支援遊戲運行中同步讀取）"""
     try:
         local_app_data = os.environ.get("LOCALAPPDATA", "")
         if not local_app_data:
@@ -222,20 +236,34 @@ def get_local_last_login_time():
         if not os.path.exists(account_path):
             return "Unknown"
 
-        with open(account_path, "r", encoding="utf-8-sig") as f:
-            data = json.load(f)
-            utc_time_str = data.get("ClientState", {}).get("LastLoginTime", "")
-            if not utc_time_str:
-                return "Unknown"
+        temp_path = os.path.join(BASE_DIR, "temp_AccountState.json")
+        try:
+            shutil.copy2(account_path, temp_path)
+            read_target = temp_path
+        except PermissionError:
+            read_target = account_path
 
-            if utc_time_str.endswith("Z"):
-                utc_time_str = utc_time_str[:-1] + "+00:00"
-            
-            utc_dt = datetime.fromisoformat(utc_time_str)
-            local_dt = utc_dt.astimezone()
-            return local_dt.strftime("%Y-%m-%d %H:%M:%S")
+        with open(read_target, "r", encoding="utf-8-sig", errors="ignore") as f:
+            data = json.load(f)
+
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except:
+                pass
+
+        utc_time_str = data.get("ClientState", {}).get("LastLoginTime", "")
+        if not utc_time_str:
+            return "Unknown"
+
+        if utc_time_str.endswith("Z"):
+            utc_time_str = utc_time_str[:-1] + "+00:00"
+
+        utc_dt = datetime.fromisoformat(utc_time_str)
+        local_dt = utc_dt.astimezone()
+        return local_dt.strftime("%Y-%m-%d %H:%M:%S")
     except Exception as e:
-        print(f"Failed to parse LastLoginTime: {e}")
+        print(f"Failed to parse LastLoginTime via snapshot: {e}")
         return "Unknown"
 
 
@@ -512,7 +540,6 @@ class MarvelSnapApp(ctk.CTk):
         id_top_row = ctk.CTkFrame(id_container, fg_color="transparent")
         id_top_row.pack(fill="x", pady=(0, 4))
 
-        # 左側標題：Discord User ID + 超連結文字
         left_label_frame = ctk.CTkFrame(id_top_row, fg_color="transparent")
         left_label_frame.pack(side="left")
 
@@ -524,7 +551,6 @@ class MarvelSnapApp(ctk.CTk):
         )
         self.id_label.pack(side="left")
 
-        # 🔗 邀請 Bot 超連結文字
         self.invite_bot_link = ctk.CTkButton(
             left_label_frame,
             text=t["invite_bot_link"],
@@ -670,7 +696,6 @@ class MarvelSnapApp(ctk.CTk):
         threading.Thread(target=self.check_for_updates, daemon=True).start()
 
     def generate_my_share_code(self):
-        """利用位元圖 (Bitmask) 生成分享碼"""
         import tkinter.messagebox as mb
         try:
             cards_db_path = os.path.join(BASE_DIR, "marvel_snap_cards.json")
@@ -702,8 +727,21 @@ class MarvelSnapApp(ctk.CTk):
                 mb.showerror("Error", "CollectionState.json not found! Please launch Marvel Snap on Steam first.")
                 return
 
-            with open(collection_path, "r", encoding="utf-8-sig") as f:
+            temp_path = os.path.join(BASE_DIR, "temp_CollectionState.json")
+            try:
+                shutil.copy2(collection_path, temp_path)
+                read_target = temp_path
+            except PermissionError:
+                read_target = collection_path
+
+            with open(read_target, "r", encoding="utf-8-sig", errors="ignore") as f:
                 data = json.load(f)
+
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
 
             owned_raw_cards = data.get("ServerState", {}).get("Cards", [])
             owned_set = {c.get("CardDefId", "").strip() for c in owned_raw_cards if c.get("CardDefId")}
@@ -742,7 +780,6 @@ class MarvelSnapApp(ctk.CTk):
             mb.showerror("Error", f"Failed to generate code: {e}")
 
     def load_friend_collection_code(self):
-        """透過 Bitmask 還原卡片庫"""
         import tkinter.messagebox as mb
         code = self.share_entry.get().strip()
         if not code:
@@ -781,7 +818,6 @@ class MarvelSnapApp(ctk.CTk):
         self.render_gallery_from_card_ids(friend_game_id, friend_card_ids)
 
     def render_gallery_from_card_ids(self, game_id, owned_def_ids):
-        """通用 HTML 展覽館生成邏輯（依 Cost 排序，再依 Power 排序）"""
         import tkinter.messagebox as mb
         try:
             cards_db_path = os.path.join(BASE_DIR, "marvel_snap_cards.json")
@@ -1033,7 +1069,6 @@ class MarvelSnapApp(ctk.CTk):
             self.log("AnalyticState.json SnapId not found yet. Please ensure Marvel Snap has been launched.")
 
     def check_for_updates(self):
-        """透過 GitHub Releases API 檢查是否有新版本發布"""
         try:
             self.log("Checking for software updates via GitHub Releases API...")
             headers = {"Accept": "application/vnd.github.v3+json"}
@@ -1169,8 +1204,21 @@ class MarvelSnapApp(ctk.CTk):
                 self.after(0, lambda: self.collection_btn.configure(state="normal"))
                 return
 
-            with open(collection_path, "r", encoding="utf-8-sig") as f:
+            temp_path = os.path.join(BASE_DIR, "temp_CollectionState.json")
+            try:
+                shutil.copy2(collection_path, temp_path)
+                read_target = temp_path
+            except PermissionError:
+                read_target = collection_path
+
+            with open(read_target, "r", encoding="utf-8-sig", errors="ignore") as f:
                 data = json.load(f)
+
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
 
             owned_raw_cards = data.get("ServerState", {}).get("Cards", [])
             owned_set = {c.get("CardDefId", "").strip() for c in owned_raw_cards if c.get("CardDefId")}
@@ -1236,7 +1284,6 @@ class MarvelSnapApp(ctk.CTk):
         self.log("Automation completely stopped.")
 
     def automation_loop(self, discord_id):
-        """自動化主迴圈：全球統一以 UTC 19:00（香港 03:00）商店刷新點進行跨日判定"""
         self.run_once(discord_id)
         last_reset_date = get_global_game_reset_date()
 
@@ -1283,6 +1330,38 @@ class MarvelSnapApp(ctk.CTk):
 
                 self.log("Checking login status...")
                 time.sleep(3)
+
+                # ==========================================
+                # 🔒 登入狀態檢測與等待登入防護機制 (v8.2)
+                # ==========================================
+                login_btn_locator = page.locator("button:has-text('Log in')").or_(page.locator("text=Log in"))
+                
+                max_wait_login = 180  # 最多等待 3 分鐘讓用戶登入
+                waited_time = 0
+                
+                while login_btn_locator.count() > 0 and waited_time < max_wait_login:
+                    if self.stop_event.is_set():
+                        break
+                    if waited_time == 0:
+                        self.log("⚠️ Not logged in or session cookie expired! Please log in via the browser window...")
+                    
+                    time.sleep(3)
+                    waited_time += 3
+                    
+                    if login_btn_locator.count() == 0:
+                        self.log("✅ Login detected successfully! Continuing automation...")
+                        break
+                
+                if login_btn_locator.count() > 0:
+                    self.log("❌ Login timeout or not logged in. Sending notification and aborting this run.")
+                    try:
+                        self.send_notification(discord_id, "⚠️ [Marvel Snap Turbo] Not logged in or web session cookie expired. Please open the app and log in to continue.")
+                    except:
+                        pass
+                    browser.close()
+                    self.active_browser_context = None
+                    return
+                # ==========================================
 
                 if self.stop_event.is_set():
                     browser.close()
@@ -1420,7 +1499,7 @@ class MarvelSnapApp(ctk.CTk):
             with open(image_path, "rb") as f:
                 files = {"file": ("screenshot.png", f, "image/png")}
                 data = {"user_id": user_id, "message": message}
-                response = requests.post(RENDER_API_URL, data=data, files=files, timeout=30)
+                response = requests.post(RENDER_API_URL, data=data, files=files, timeout=45)
                 if response.status_code == 200:
                     return
         except Exception as e:
@@ -1440,7 +1519,7 @@ class MarvelSnapApp(ctk.CTk):
     def send_notification(self, user_id, message):
         try:
             payload = {"user_id": user_id, "message": message}
-            response = requests.post(RENDER_API_URL, json=payload, timeout=10)
+            response = requests.post(RENDER_API_URL, json=payload, timeout=20)
             if response.status_code == 200:
                 return
         except Exception as e:
@@ -1450,24 +1529,24 @@ class MarvelSnapApp(ctk.CTk):
         try:
             self.log("Retrying to send message notification...")
             payload = {"user_id": user_id, "message": message}
-            requests.post(RENDER_API_URL, json=payload, timeout=15)
+            requests.post(RENDER_API_URL, json=payload, timeout=30)
             self.log("Retry message send successful!")
         except Exception as e2:
             self.log(f"Retry message send failed: {e2}")
 
     def wake_up_render_server(self):
         try:
-            self.log("Detected Render server sleeping, executing wake-up sequence...")
-            for i in range(2):
+            self.log("Detected Render server sleeping, executing extended wake-up sequence...")
+            for i in range(3):
                 try:
-                    requests.get(RENDER_PING_URL, timeout=8)
+                    requests.get(RENDER_PING_URL, timeout=10)
                     self.log(f"   Wake-up ping #{i+1} sent.")
                 except:
                     pass
-                if i < 1:
-                    time.sleep(2)
-            self.log("Waiting for server startup completion (3s)...")
-            time.sleep(3)
+                if i < 2:
+                    time.sleep(3)
+            self.log("Waiting for server startup completion (6s)...")
+            time.sleep(6)
         except Exception as ex:
             self.log(f"Failed to wake up server: {ex}")
 
