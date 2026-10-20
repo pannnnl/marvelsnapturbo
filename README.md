@@ -69,3 +69,7 @@ You can download the latest `.exe` release from the **Releases** section on the 
 
 #### 🖼 Card Collection Gallery Preview (卡片展覽館預覽)
 <img width="1663" height="919" alt="螢幕擷取畫面 2026-10-20 025926" src="https://github.com/user-attachments/assets/ef2f12f2-ea69-4691-a558-765e3e049d01" />
+
+#### DC Alert Preview
+<img width="1184" height="731" alt="image" src="https://github.com/user-attachments/assets/1b0020eb-7952-461c-896a-6544a90d32d4" />
+
