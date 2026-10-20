@@ -24,12 +24,13 @@ ctk.set_default_color_theme("green")
 RENDER_API_URL = "https://msnap-bot.onrender.com/notify"
 RENDER_PING_URL = "https://msnap-bot.onrender.com"
 GITHUB_CARDS_URL = "https://raw.githubusercontent.com/pannnnl/marvel-snap-cards-api/main/marvel_snap_cards.json"
+BOT_INVITE_URL = "https://discord.com/oauth2/authorize?client_id=1560327479711764603&permissions=117760&integration_type=0&scope=bot"
 
-# 🚀 使用 GitHub 官方 Releases API 進行版本檢查（完全免維護 version.json）
+# 🚀 使用 GitHub 官方 Releases API 進行版本檢查
 GITHUB_RELEASE_API = "https://api.github.com/repos/pannnnl/marvelsnapturbo/releases/latest"
 
-CURRENT_VERSION = "8.17"  # 當前程式版本號
-AUTHOR_GITHUB = "https://github.com/pannnnl/marvelsnapturbo"  # 你的專案 GitHub 連結
+CURRENT_VERSION = "8.18"  # 當前程式版本號
+AUTHOR_GITHUB = "https://github.com/pannnnl/marvelsnapturbo"  # 專案 GitHub 連結
 
 # 自動在用戶的「文件 (Documents)」建立專屬資料夾
 BASE_DIR = os.path.join(os.path.expanduser("~"), "Documents", "MS_BOT")
@@ -42,7 +43,7 @@ USER_DATA_DIR = os.path.join(BASE_DIR, "browser_profile")
 # 🌐 多國語言介面字典
 LANG_DATA = {
     "en": {
-        "badge": "⚡ TURBO AUTOMATION SUITE v8.17 [Global UTC Sync]",
+        "badge": "⚡ TURBO AUTOMATION SUITE v8.18 [Global UTC Sync]",
         "switch_btn": "文/A",
         "clear_session_btn": "🗑 Clear Web Session",
         "refresh_btn": "↻ Refresh Local Data",
@@ -50,7 +51,8 @@ LANG_DATA = {
         "subtitle": "Collection Gallery & Sharing • Auto 100 Credits • Web Shop Bundle Alerts",
         "account_status": "🎮 Game Account: Not Logged In\n🕒 Last Login: Unknown",
         "id_label": "Discord User ID (For Auto-Claim & Shop Alerts)",
-        "id_placeholder": "Enter your Discord User ID (e.g. 123456789)",
+        "id_placeholder": "Enter Discord User ID (e.g. 123456789)",
+        "invite_bot_link": "🔗 Invite Bot to Discord",
         "shop_cb": "Enable shop bundle alerts (8-day smart filter)",
         "start_btn": "🚀 Auto-Claim 100 Credits",
         "stop_btn": "⏹ Stop Automation",
@@ -59,10 +61,10 @@ LANG_DATA = {
         "share_import_btn": "📥 Import",
         "share_placeholder": "Paste friend's card collection code here...",
         "log_title": " 💻 System Terminal Log (English)",
-        "ready_msg": "💡 Marvel Snap Turbo v8.17 ready. Global UTC shop sync enabled.",
+        "ready_msg": "💡 Marvel Snap Turbo v8.18 ready. Global UTC shop sync enabled.",
     },
     "zh": {
-        "badge": "⚡ TURBO 智能自動化助手 v8.17 [全球統一 UTC 同步版]",
+        "badge": "⚡ TURBO 智能自動化助手 v8.18 [全球統一 UTC 同步版]",
         "switch_btn": "文/A",
         "clear_session_btn": "🗑 清除網頁授權快取",
         "refresh_btn": "↻ 重新整理本地數據",
@@ -71,6 +73,7 @@ LANG_DATA = {
         "account_status": "🎮 遊戲帳號: 尚未登入 (Not Logged In)\n🕒 上次登入: 未知",
         "id_label": "Discord 使用者 ID (用於自動領取與商店通知)",
         "id_placeholder": "請輸入你的 Discord ID (例如 123456789)",
+        "invite_bot_link": "🔗 邀請 Bot 加入 Discord",
         "shop_cb": "啟用禮包商店通知 (8天智慧過濾)",
         "start_btn": "🚀 自動領取 100 點數",
         "stop_btn": "⏹ 停止自動化",
@@ -79,7 +82,7 @@ LANG_DATA = {
         "share_import_btn": "📥 導入",
         "share_placeholder": "在此貼上好友的卡片庫代碼...",
         "log_title": " 💻 System Terminal Log (English)",
-        "ready_msg": "💡 Marvel Snap Turbo v8.17 已就緒。已啟用全球統一 UTC 商店刷新同步機制。",
+        "ready_msg": "💡 Marvel Snap Turbo v8.18 已就緒。已啟用全球統一 UTC 商店刷新同步機制。",
     }
 }
 
@@ -316,7 +319,6 @@ def decode_bitmask_data(share_code, total_cards):
 def get_global_game_reset_date():
     """全球統一以 UTC 19:00（香港時間凌晨 3:00）作為遊戲換日週期基準"""
     now_utc = datetime.now(timezone.utc)
-    # 如果當前 UTC 小時 < 19，代表還沒到當天的 19:00 UTC，屬於前一個遊戲週期
     if now_utc.hour < 19:
         return (now_utc - timedelta(days=1)).strftime("%Y-%m-%d")
     else:
@@ -510,13 +512,31 @@ class MarvelSnapApp(ctk.CTk):
         id_top_row = ctk.CTkFrame(id_container, fg_color="transparent")
         id_top_row.pack(fill="x", pady=(0, 4))
 
+        # 左側標題：Discord User ID + 超連結文字
+        left_label_frame = ctk.CTkFrame(id_top_row, fg_color="transparent")
+        left_label_frame.pack(side="left")
+
         self.id_label = ctk.CTkLabel(
-            id_top_row,
+            left_label_frame,
             text=t["id_label"],
             font=ctk.CTkFont(family="Microsoft JhengHei", size=12, weight="bold"),
             text_color="#e5e7eb",
         )
         self.id_label.pack(side="left")
+
+        # 🔗 邀請 Bot 超連結文字
+        self.invite_bot_link = ctk.CTkButton(
+            left_label_frame,
+            text=t["invite_bot_link"],
+            command=lambda: webbrowser.open(BOT_INVITE_URL),
+            font=ctk.CTkFont(family="Microsoft JhengHei", size=11, underline=True),
+            text_color="#38bdf8",
+            fg_color="transparent",
+            hover_color="#1f2937",
+            height=20,
+            width=0
+        )
+        self.invite_bot_link.pack(side="left", padx=(8, 0))
 
         self.clear_session_btn = ctk.CTkButton(
             id_top_row,
@@ -1063,6 +1083,7 @@ class MarvelSnapApp(ctk.CTk):
 
         self.id_label.configure(text=t["id_label"])
         self.id_entry.configure(placeholder_text=t["id_placeholder"])
+        self.invite_bot_link.configure(text=t["invite_bot_link"])
         self.shop_cb.configure(text=t["shop_cb"])
         self.collection_btn.configure(text=t["collection_btn"])
         self.share_export_btn.configure(text=t["share_export_btn"])
@@ -1217,13 +1238,11 @@ class MarvelSnapApp(ctk.CTk):
     def automation_loop(self, discord_id):
         """自動化主迴圈：全球統一以 UTC 19:00（香港 03:00）商店刷新點進行跨日判定"""
         self.run_once(discord_id)
-        # 紀錄啟動時的全球遊戲刷新週期 (UTC 19:00 為基準)
         last_reset_date = get_global_game_reset_date()
 
         while not self.stop_event.is_set():
             current_reset_date = get_global_game_reset_date()
 
-            # 當跨過全球統一的 19:00 UTC 刷新點時自動觸發
             if current_reset_date != last_reset_date:
                 self.log(f"Reached global shop reset time (19:00 UTC). Starting scheduled daily check & shop alert...")
                 self.run_once(discord_id)
