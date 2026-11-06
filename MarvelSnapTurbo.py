@@ -29,7 +29,7 @@ BOT_INVITE_URL = "https://discord.com/oauth2/authorize?client_id=156032747971176
 # 🚀 使用 GitHub 官方 Releases API 進行版本檢查
 GITHUB_RELEASE_API = "https://api.github.com/repos/pannnnl/marvelsnapturbo/releases/latest"
 
-CURRENT_VERSION = "8.2"  # 版本號維持 v8.2
+CURRENT_VERSION = "8.3"  # 版本號
 AUTHOR_GITHUB = "https://github.com/pannnnl/marvelsnapturbo"  # 專案 GitHub 連結
 
 # 自動在用戶的「文件 (Documents)」建立專屬資料夾
@@ -43,7 +43,7 @@ USER_DATA_DIR = os.path.join(BASE_DIR, "browser_profile")
 # 🌐 多國語言介面字典
 LANG_DATA = {
     "en": {
-        "badge": "⚡ TURBO v8.2 [Optimized Web Login & Session Guard]",
+        "badge": "⚡ TURBO v8.3 [Sorted Bitmask & Bundle Selector]",
         "switch_btn": "文/A",
         "clear_session_btn": "🗑 Clear Web Session",
         "refresh_btn": "↻ Refresh Local Data",
@@ -61,10 +61,10 @@ LANG_DATA = {
         "share_import_btn": "📥 Import",
         "share_placeholder": "Paste friend's card collection code here...",
         "log_title": " 💻 System Terminal Log (English)",
-        "ready_msg": "💡 Marvel Snap Turbo v8.2 ready. Enhanced login state handler active.",
+        "ready_msg": "💡 Marvel Snap Turbo v8.3 ready. Sorted bitmask and precise bundle selector active.",
     },
     "zh": {
-        "badge": "⚡ TURBO v8.2 [優化首次登入網店版本]",
+        "badge": "⚡ TURBO v8.3 [已優化位元排序與精準禮包鎖定]",
         "switch_btn": "文/A",
         "clear_session_btn": "🗑 清除網頁授權快取",
         "refresh_btn": "↻ 重新整理本地數據",
@@ -82,7 +82,7 @@ LANG_DATA = {
         "share_import_btn": "📥 導入",
         "share_placeholder": "在此貼上好友的卡片庫代碼...",
         "log_title": " 💻 System Terminal Log (English)",
-        "ready_msg": "💡 Marvel Snap Turbo v8.2 已就緒。已啟用優化登入狀態攔截與 Bot 喚醒防護。",
+        "ready_msg": "💡 Marvel Snap Turbo v8.3 已就緒。已加入字母排序防護確保分享代碼 100% 準確。",
     }
 }
 
@@ -714,6 +714,9 @@ class MarvelSnapApp(ctk.CTk):
                     if def_id and def_id not in all_def_ids:
                         all_def_ids.append(def_id)
 
+            # 🛠 【防護修正】強制進行字母排序，保證所有人解碼順序 100% 一致！
+            all_def_ids.sort()
+
             local_app_data = os.environ.get("LOCALAPPDATA", "")
             if not local_app_data:
                 local_app_data = os.path.join(os.path.expanduser("~"), "AppData", "Local")
@@ -800,6 +803,9 @@ class MarvelSnapApp(ctk.CTk):
                 def_id = item.get("def_id", "").strip()
                 if def_id and def_id not in all_def_ids:
                     all_def_ids.append(def_id)
+
+        # 🛠 【防護修正】解碼時同樣必須強制字母排序，與生成時完全對齊！
+        all_def_ids.sort()
 
         self.log("Decoding share code...")
         decoded = decode_bitmask_data(code, len(all_def_ids))
@@ -1332,7 +1338,7 @@ class MarvelSnapApp(ctk.CTk):
                 time.sleep(3)
 
                 # ==========================================
-                # 🔒 登入狀態檢測與等待登入防護機制 (v8.2)
+                # 🔒 登入狀態檢測與等待登入防護機制 (v8.3)
                 # ==========================================
                 login_btn_locator = page.locator("button:has-text('Log in')").or_(page.locator("text=Log in"))
                 
@@ -1374,27 +1380,38 @@ class MarvelSnapApp(ctk.CTk):
                     self.log(f"Successfully obtained local game account ID: {local_snap_id}")
                     self.after(0, lambda gid=local_snap_id, lt=login_time: self.account_status_label.configure(text=f"🎮 Game Account: {gid}\n🕒 Last Login: {lt}"))
 
-                reward_card = page.locator("img[alt='Credits']").locator("xpath=ancestor::div[contains(@class, 'sc-5f135772-0')][1]")
-                claim_btn_locator = page.locator("text=免費!").or_(page.locator("text=Free!"))
+                # 🛠 使用穩定的 data-offer-key 屬性定位免費獎勵卡片
+                reward_card = page.locator("[data-offer-key='dailyfree100credits']").or_(
+                    page.locator("img[alt='Credits']").locator("xpath=ancestor::div[contains(@class, 'container') or contains(@class, 'sc-')][2]")
+                )
+                claim_btn_locator = page.locator("button:has-text('免費!')").or_(page.locator("button:has-text('Free!')")).or_(page.locator(".single-card-button-text"))
 
                 self.log("Checking daily free reward status...")
 
                 if reward_card.count() > 0:
-                    reward_card.scroll_into_view_if_needed()
+                    reward_card.first.scroll_into_view_if_needed()
                     time.sleep(0.5)
                     page.evaluate("window.scrollBy(0, -120)")
                     time.sleep(0.3)
 
                     if claim_btn_locator.count() > 0:
                         self.log("Found claimable free reward! Claiming...")
-                        reward_card.screenshot(path=status_screenshot)
+                        reward_card.first.screenshot(path=status_screenshot)
                         claim_btn_locator.first.click(timeout=5000)
                         time.sleep(3)
 
                         self.log("Waiting 3s for reward popup modal and checking 'Back to Shop' button...")
                         time.sleep(3)
                         try:
-                            back_to_shop_btn = page.locator("button.sc-79dab32c-0.iMOeor:has(span.reward-result-button-text)")
+                            # 🛠 透過按鈕內的文字屬性尋找「返回商店」或「Back to Shop」
+                            back_to_shop_btn = page.locator("button:has(span.reward-result-button-text:has-text('返回商店'))").or_(
+                                page.locator("button:has(span.reward-result-button-text:has-text('Back to Shop'))")
+                            ).or_(
+                                page.locator("button:has-text('返回商店')")
+                            ).or_(
+                                page.locator("button:has-text('Back to Shop')")
+                            )
+
                             if back_to_shop_btn.is_visible(timeout=3000):
                                 self.log("Detected 'Back to Shop' reward result popup modal! Clicking it...")
                                 back_to_shop_btn.first.click(timeout=3000)
@@ -1405,12 +1422,12 @@ class MarvelSnapApp(ctk.CTk):
                         except Exception as pop_ex:
                             self.log(f"Could not find or click 'Back to Shop' button: {pop_ex}")
 
-                        reward_card.screenshot(path=status_screenshot)
+                        reward_card.first.screenshot(path=status_screenshot)
                         self.send_notification_with_image(discord_id, "🎉 [Marvel Snap Turbo] Daily free reward claimed!", status_screenshot)
                         self.log("Free reward claimed and notification sent!")
                     else:
                         self.log("Reward is currently on cooldown.")
-                        reward_card.screenshot(path=status_screenshot)
+                        reward_card.first.screenshot(path=status_screenshot)
                         self.send_notification_with_image(discord_id, "ℹ️ [Marvel Snap Turbo] Reward is on cooldown.", status_screenshot)
                 else:
                     self.log("Could not find daily reward card.")
@@ -1418,12 +1435,12 @@ class MarvelSnapApp(ctk.CTk):
                 new_shop_image_paths = []
                 if check_shop and not self.stop_event.is_set():
                     self.log("Scanning shop items and bundles...")
-                    page.evaluate("window.scrollBy(0, 700)")
-                    time.sleep(1.5)
+                    time.sleep(1.0)
 
-                    shop_cards = page.locator(".cjGdRj")
+                    # 🛠 【v8.3 精準鎖定】直接透過 data-offer-key 以 'Bundle' 開頭抓取所有禮包，完美避開其他日常商品
+                    shop_cards = page.locator("[data-offer-key^='Bundle']")
                     card_count = shop_cards.count()
-                    self.log(f"Found {card_count} shop item cards on screen.")
+                    self.log(f"Found {card_count} shop bundle cards on screen.")
 
                     if card_count > 0:
                         for i in range(card_count):
@@ -1445,15 +1462,15 @@ class MarvelSnapApp(ctk.CTk):
                                 temp_captured_files.append(item_path)
 
                                 if text_hash in history:
-                                    self.log(f"Item #{i+1} skipped (within 8 days).")
+                                    self.log(f"Bundle #{i+1} skipped (within 8 days).")
                                 else:
-                                    self.log(f"New item detected! Item #{i+1} added.")
+                                    self.log(f"New bundle detected! Bundle #{i+1} added.")
                                     card.screenshot(path=item_path)
                                     history[text_hash] = today_str
                                     new_shop_image_paths.append(item_path)
 
                             except Exception as ex:
-                                self.log(f"Error processing item #{i+1}: {ex}")
+                                self.log(f"Error processing bundle #{i+1}: {ex}")
 
                         save_history(history)
 
@@ -1468,7 +1485,7 @@ class MarvelSnapApp(ctk.CTk):
                         elif not new_shop_image_paths and not self.stop_event.is_set():
                             self.send_notification(discord_id, "🛒 [Marvel Snap Turbo Shop Alert] No new shop items found.")
                     else:
-                        self.log("No shop item cards found.")
+                        self.log("No shop bundle cards found.")
                 else:
                     self.log("Shop check skipped or task stopped.")
 
